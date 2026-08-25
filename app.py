@@ -2,9 +2,6 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-import os
-import subprocess
-import sys
 import subprocess
 import sys
 from pathlib import Path
@@ -38,9 +35,18 @@ async def instructions(request: Request):
     )
 
 
+@app.get("/status")
+async def status():
+    running = gesture_process is not None and gesture_process.poll() is None
+    return {"running": running}
+
+
 @app.post("/start")
 async def start():
     global gesture_process
+
+    if gesture_process is not None and gesture_process.poll() is None:
+        return {"message": "Already running"}
 
     gesture_path = Path(__file__).parent / "gesture.py"
     print("Gesture path:", gesture_path)
@@ -50,6 +56,7 @@ async def start():
     )
 
     print("Started:", gesture_process.pid)
+
     return {"message": "Started"}
 
 
